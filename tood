@@ -1,0 +1,407 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
+
+-- 1. GUI BASE SETUP
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ViolenceDistrict_UltimateHub"
+ScreenGui.ResetOnSpawn = false
+
+local success, coregui = pcall(function() return CoreGui end)
+if success and coregui then
+    ScreenGui.Parent = coregui
+else
+    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+end
+
+-- ปุ่มลอยสำหรับเปิด-ปิด UI
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Name = "ToggleMenuBtn"
+ToggleBtn.Size = UDim2.new(0, 55, 0, 55)
+ToggleBtn.Position = UDim2.new(0, 15, 0.4, 0)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+ToggleBtn.TextColor3 = Color3.fromRGB(0, 255, 150)
+ToggleBtn.Text = "TOOD\n[ON]"
+ToggleBtn.Font = Enum.Font.SourceSansBold
+ToggleBtn.TextSize = 12
+ToggleBtn.Active = true
+ToggleBtn.Draggable = true
+ToggleBtn.Parent = ScreenGui
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(0, 28)
+ToggleCorner.Parent = ToggleBtn
+
+-- หน้าต่างหลัก (Main Frame)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 340, 0, 620)
+MainFrame.Position = UDim2.new(0.2, 0, 0.15, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.Parent = MainFrame
+
+-- หัวข้อ HUB
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -50, 0, 40)
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Text = "⚡ TOOD HUB - ULTIMATE"
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 15
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = MainFrame
+
+-- ปุ่มย่อเก็บ UI (-)
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 30, 0, 25)
+CloseBtn.Position = UDim2.new(1, -38, 0, 8)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Text = "-"
+CloseBtn.Font = Enum.Font.SourceSansBold
+CloseBtn.TextSize = 18
+CloseBtn.Parent = MainFrame
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 6)
+CloseCorner.Parent = CloseBtn
+
+local function toggleUIVisibility()
+    MainFrame.Visible = not MainFrame.Visible
+    ToggleBtn.Text = MainFrame.Visible and "TOOD\n[ON]" or "TOOD\n[OFF]"
+    ToggleBtn.TextColor3 = MainFrame.Visible and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(255, 80, 80)
+end
+
+ToggleBtn.MouseButton1Click:Connect(toggleUIVisibility)
+CloseBtn.MouseButton1Click:Connect(toggleUIVisibility)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift then
+        toggleUIVisibility()
+    end
+end)
+
+-- Container สำหรับหมวดหมู่
+local Container = Instance.new("ScrollingFrame")
+Container.Size = UDim2.new(0.92, 0, 0.84, 0)
+Container.Position = UDim2.new(0.04, 0, 0.13, 0)
+Container.BackgroundTransparency = 1
+Container.CanvasSize = UDim2.new(0, 0, 0, 1700)
+Container.ScrollBarThickness = 4
+Container.Parent = MainFrame
+
+local UIList = Instance.new("UIListLayout")
+UIList.Parent = Container
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+UIList.Padding = UDim.new(0, 10)
+
+local function createCategory(text)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, 0, 0, 25)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.fromRGB(0, 200, 255)
+    lbl.Text = "📁 " .. text
+    lbl.Font = Enum.Font.SourceSansBold
+    lbl.TextSize = 15
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = Container
+end
+
+local function createButton(text, parent)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 38)
+    btn.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Text = text
+    btn.Font = Enum.Font.SourceSans
+    btn.TextSize = 14
+    btn.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = btn
+    return btn
+end
+
+local function createTextBox(placeholder, parent)
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(1, 0, 0, 35)
+    box.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    box.PlaceholderText = placeholder
+    box.Text = ""
+    box.Font = Enum.Font.SourceSans
+    box.TextSize = 14
+    box.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = box
+    return box
+end
+
+
+-- ======================================================
+-- 1. หมวดหมู่: ระบบขยาย HITBOX
+-- ======================================================
+createCategory("ระบบขยาย Hitbox (Hitbox Expander)")
+
+local HitboxToggle = createButton("📦 เปิดใช้งานขยาย Hitbox: ปิด (OFF)", Container)
+local HitboxBox = createTextBox("กรอกขนาด Hitbox เช่น 10, 20, 30", Container)
+
+local hitboxActive = false
+local hitboxSize = 10
+
+HitboxToggle.MouseButton1Click:Connect(function()
+    hitboxActive = not hitboxActive
+    HitboxToggle.Text = hitboxActive and "📦 เปิดใช้งานขยาย Hitbox: เปิด (ON)" or "📦 เปิดใช้งานขยาย Hitbox: ปิด (OFF)"
+    HitboxToggle.BackgroundColor3 = hitboxActive and Color3.fromRGB(40, 160, 80) or Color3.fromRGB(25, 25, 35)
+    
+    if not hitboxActive then
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = plr.Character.HumanoidRootPart
+                hrp.Size = Vector3.new(2, 2, 1)
+                hrp.Transparency = 1
+                hrp.CanCollide = true
+            end
+        end
+    end
+end)
+
+HitboxBox:GetPropertyChangedSignal("Text"):Connect(function()
+    local num = tonumber(HitboxBox.Text)
+    if num then hitboxSize = num end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not hitboxActive then return end
+    
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = plr.Character.HumanoidRootPart
+            hrp.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
+            hrp.Transparency = 0.7
+            hrp.Material = Enum.Material.ForceField
+            hrp.Color = Color3.fromRGB(255, 0, 0)
+            hrp.CanCollide = false
+        end
+    end
+end)
+
+
+-- ======================================================
+-- 2. หมวดหมู่: ระบบเคลื่อนไหว & กระโดดไม่จำกัด (Movement)
+-- ======================================================
+createCategory("ระบบเคลื่อนไหว & กระโดด (Movement)")
+
+local InfJumpToggle = createButton("🦘 กระโดดไม่จำกัดกลางอากาศ (Infinite Jump): ปิด (OFF)", Container)
+local SpeedToggle = createButton("⚡ เปิดใช้งานวิ่งเร็ว: ปิด (OFF)", Container)
+local SpeedBox = createTextBox("กรอกความเร็ว เช่น 25, 50", Container)
+local NoclipToggle = createButton("🧱 ทะลุกำแพง (Noclip): ปิด (OFF)", Container)
+
+local infJumpActive = false
+local speedActive = false
+local customSpeed = 16
+local noclipActive = false
+
+InfJumpToggle.MouseButton1Click:Connect(function()
+    infJumpActive = not infJumpActive
+    InfJumpToggle.Text = infJumpActive and "🦘 กระโดดไม่จำกัด: เปิด (ON)" or "🦘 กระโดดไม่จำกัด: ปิด (OFF)"
+    InfJumpToggle.BackgroundColor3 = infJumpActive and Color3.fromRGB(40, 160, 80) or Color3.fromRGB(25, 25, 35)
+end)
+
+-- ทำงานเมื่อกดปุ่ม Spacebar กระโดดกลางอากาศ
+UserInputService.JumpRequest:Connect(function()
+    if infJumpActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+SpeedToggle.MouseButton1Click:Connect(function()
+    speedActive = not speedActive
+    SpeedToggle.Text = speedActive and "⚡ วิ่งเร็ว: เปิด (ON)" or "⚡ วิ่งเร็ว: ปิด (OFF)"
+    SpeedToggle.BackgroundColor3 = speedActive and Color3.fromRGB(40, 160, 80) or Color3.fromRGB(25, 25, 35)
+end)
+
+SpeedBox:GetPropertyChangedSignal("Text"):Connect(function()
+    local num = tonumber(SpeedBox.Text)
+    if num then customSpeed = num end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if speedActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = customSpeed
+    end
+end)
+
+NoclipToggle.MouseButton1Click:Connect(function()
+    noclipActive = not noclipActive
+    NoclipToggle.Text = noclipActive and "🧱 Noclip: เปิด (ON)" or "🧱 Noclip: ปิด (OFF)"
+    NoclipToggle.BackgroundColor3 = noclipActive and Color3.fromRGB(40, 160, 80) or Color3.fromRGB(25, 25, 35)
+end)
+
+RunService.Stepped:Connect(function()
+    if noclipActive and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = false end
+        end
+    end
+end)
+
+
+-- ======================================================
+-- 3. หมวดหมู่: ระบบล็อกเป้า (Strong Aim, Hitbox & NPC Lock)
+-- ======================================================
+createCategory("ระบบล็อกเป้าขั้นสูง (Aim & NPC Lock)")
+
+local StrongAimToggle = createButton("🔥 Strong Aim (ล็อกเป้าแรงทันที): ปิด (OFF)", Container)
+local NpcLockToggle = createButton("🤖 ล็อก NPC ในแมพ: ปิด (OFF)", Container)
+local WallcheckToggle = createButton("🧱 Wallcheck (เช็คสิ่งกีดขวาง): ปิด (OFF)", Container)
+local TeamcheckToggle = createButton("👥 Teamcheck (เช็คพวกเดียวกัน): ปิด (OFF)", Container)
+
+createCategory("เลือกส่วนที่จะล็อก (Hitbox Target)")
+local LockHeadBtn = createButton("🎯 เป้าหมาย: ล็อกหัว (Head) [เปิดอยู่]", Container)
+local LockTorsoBtn = createButton("👕 เป้าหมาย: ล็อกตัว (Torso)", Container)
+local LockLegBtn = createButton("🦵 เป้าหมาย: ล็อกขา (Legs)", Container)
+
+local strongAimActive = false
+local npcLockActive = false
+local wallcheckActive = false
+local teamcheckActive = false
+local targetPartName = "Head"
+local presetFov = 300
+
+StrongAimToggle.MouseButton1Click:Connect(function()
+    strongAimActive = not strongAimActive
+    StrongAimToggle.Text = strongAimActive and "🔥 Strong Aim: เปิด (ON)" or "🔥 Strong Aim: ปิด (OFF)"
+    StrongAimToggle.BackgroundColor3 = strongAimActive and Color3.fromRGB(220, 50, 50) or Color3.fromRGB(25, 25, 35)
+end)
+
+NpcLockToggle.MouseButton1Click:Connect(function()
+    npcLockActive = not npcLockActive
+    NpcLockToggle.Text = npcLockActive and "🤖 ล็อก NPC ในแมพ: เปิด (ON)" or "🤖 ล็อก NPC ในแมพ: ปิด (OFF)"
+    NpcLockToggle.BackgroundColor3 = npcLockActive and Color3.fromRGB(40, 160, 80) or Color3.fromRGB(25, 25, 35)
+end)
+
+WallcheckToggle.MouseButton1Click:Connect(function()
+    wallcheckActive = not wallcheckActive
+    WallcheckToggle.Text = wallcheckActive and "🧱 Wallcheck: เปิด (ON)" or "🧱 Wallcheck: ปิด (OFF)"
+    WallcheckToggle.BackgroundColor3 = wallcheckActive and Color3.fromRGB(40, 160, 80) or Color3.fromRGB(25, 25, 35)
+end)
+
+TeamcheckToggle.MouseButton1Click:Connect(function()
+    teamcheckActive = not teamcheckActive
+    TeamcheckToggle.Text = teamcheckActive and "👥 Teamcheck: เปิด (ON)" or "👥 Teamcheck: ปิด (OFF)"
+    TeamcheckToggle.BackgroundColor3 = teamcheckActive and Color3.fromRGB(40, 160, 80) or Color3.fromRGB(25, 25, 35)
+end)
+
+LockHeadBtn.MouseButton1Click:Connect(function()
+    targetPartName = "Head"
+    LockHeadBtn.Text = "🎯 เป้าหมาย: ล็อกหัว (Head) [เปิดอยู่]"
+    LockTorsoBtn.Text = "👕 เป้าหมาย: ล็อกตัว (Torso)"
+    LockLegBtn.Text = "🦵 เป้าหมาย: ล็อกขา (Legs)"
+end)
+
+LockTorsoBtn.MouseButton1Click:Connect(function()
+    targetPartName = "HumanoidRootPart"
+    LockHeadBtn.Text = "🎯 เป้าหมาย: ล็อกหัว (Head)"
+    LockTorsoBtn.Text = "👕 เป้าหมาย: ล็อกตัว (Torso) [เปิดอยู่]"
+    LockLegBtn.Text = "🦵 เป้าหมาย: ล็อกขา (Legs)"
+end)
+
+LockLegBtn.MouseButton1Click:Connect(function()
+    targetPartName = "LeftLowerLeg"
+    LockHeadBtn.Text = "🎯 เป้าหมาย: ล็อกหัว (Head)"
+    LockTorsoBtn.Text = "👕 เป้าหมาย: ล็อกตัว (Torso)"
+    LockLegBtn.Text = "🦵 เป้าหมาย: ล็อกขา (Legs) [เปิดอยู่]"
+end)
+
+local fovCircle = Drawing.new("Circle")
+fovCircle.Thickness = 2
+fovCircle.Filled = false
+fovCircle.Visible = true
+
+local function isVisible(targetPart)
+    if not wallcheckActive then return true end
+    local origin = Camera.CFrame.Position
+    local direction = (targetPart.Position - origin).Unit * (targetPart.Position - origin).Magnitude
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
+    
+    local result = workspace:Raycast(origin, direction, raycastParams)
+    return not result or result.Instance:IsDescendantOf(targetPart.Parent)
+end
+
+RunService.RenderStepped:Connect(function()
+    local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    fovCircle.Radius = presetFov
+    fovCircle.Position = screenCenter
+    
+    local hue = (tick() % 5) / 5
+    fovCircle.Color = Color3.fromHSV(hue, 1, 1)
+    fovCircle.Visible = strongAimActive
+    
+    if strongAimActive then
+        local closestTarget = nil
+        local shortestDist = presetFov
+        
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild(targetPartName) then
+                if not teamcheckActive or (teamcheckActive and plr.Team ~= LocalPlayer.Team) then
+                    local part = plr.Character[targetPartName]
+                    local screenPoint, onScreen = Camera:WorldToViewportPoint(part.Position)
+                    
+                    if onScreen then
+                        local screenPos = Vector2.new(screenPoint.X, screenPoint.Y)
+                        local distFromCenter = (screenCenter - screenPos).Magnitude
+                        
+                        if distFromCenter < shortestDist and isVisible(part) then
+                            shortestDist = distFromCenter
+                            closestTarget = part
+                        end
+                    end
+                end
+            end
+        end
+        
+        if npcLockActive then
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj:FindFirstChild(targetPartName) then
+                    local isPlayerModel = Players:GetPlayerFromCharacter(obj)
+                    if not isPlayerModel and obj ~= LocalPlayer.Character then
+                        local part = obj[targetPartName]
+                        local screenPoint, onScreen = Camera:WorldToViewportPoint(part.Position)
+                        
+                        if onScreen then
+                            local screenPos = Vector2.new(screenPoint.X, screenPoint.Y)
+                            local distFromCenter = (screenCenter - screenPos).Magnitude
+                            
+                            if distFromCenter < shortestDist and isVisible(part) then
+                                shortestDist = distFromCenter
+                                closestTarget = part
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        
+        if closestTarget then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, closestTarget.Position)
+        end
+    end
+end)
